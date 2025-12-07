@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROJECT SAPPHIRE // COMMAND</title>
+    <style>
+        /* --- CYBERPUNK STYLING --- */
+        :root {
+            --bg: #020202;
+            --panel: #0b1016;
+            --villareal: #00f0ff; /* Cyan */
+            --alcedo: #ff1a1a;    /* Red */
+            --dim: #445566;
+            --accent: #ffd700;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        header {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 30px;
+            border-bottom: 3px solid var(--villareal);
+        }
+
+        h1 {
+            font-family: Impact, sans-serif;
+            font-size: 2.5rem;
+            margin: 0;
+            color: var(--villareal);
+            letter-spacing: 5px;
+        }
+
+        #clock {
+            font-size: 1.5rem;
+            color: var(--dim);
+        }
+
+        /* LAYOUT */
+        .main-container {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+            gap: 15px;
+        }
+
+        /* COL 1: TRAFFIC */
+        .col-1 {
+            width: 150px;
+            background: var(--panel);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 10px;
+        }
+        .traffic-graph {
+            display: flex;
+            align-items: flex-end;
+            gap: 5px;
+            height: 100%;
+            padding-bottom: 20px;
+        }
+        .bar {
+            width: 8px;
+            background: var(--dim);
+            transition: height 0.2s ease, background 0.2s;
+        }
+
+        /* COL 2: MAP (CENTER) */
+        .col-2 {
+            flex: 1;
+            background: var(--panel);
+            border: 1px solid var(--villareal);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: relative;
+        }
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(14, 1fr);
+            gap: 4px;
+            flex: 1;
+        }
+        .grid-block {
+            background-color: var(--alcedo); /* Start Hostile */
+            border: 1px solid #440000;
+            transition: background-color 0.3s;
+        }
+        .grid-block.friendly {
+            background-color: var(--villareal);
+            border: 1px solid #004444;
+            box-shadow: 0 0 5px var(--villareal);
+        }
+        #percentage {
+            font-size: 4rem;
+            font-weight: bold;
+            text-align: center;
+            color: var(--alcedo);
+            margin-top: 10px;
+        }
+
+        /* COL 3: TERMINAL */
+        .col-3 {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+        }
+        .terminal {
+            flex: 1;
+            background: black;
+            border: 1px solid #333;
+            padding: 10px;
+            font-size: 0.9rem;
+            color: #00ff00;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            font-family: 'Consolas', monospace;
+        }
+        .log-entry { margin-bottom: 5px; }
+        .alert { color: var(--alcedo); background: #220000; }
+        
+        button {
+            background: var(--alcedo);
+            color: black;
+            border: none;
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            font-family: 'Consolas', monospace;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover { opacity: 0.8; }
+        button.success {
+            background: var(--villareal);
+            color: black;
+            cursor: default;
+        }
+
+        /* POPUP */
+        #popup {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            background: var(--panel);
+            border: 4px solid var(--villareal);
+            padding: 40px;
+            z-index: 100;
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.2);
+        }
+        .popup-title {
+            font-family: Impact, sans-serif;
+            font-size: 2.5rem;
+            color: var(--villareal);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>P R O J E C T &nbsp; S A P P H I R E</h1>
+        <div id="clock">00:00:00</div>
+    </header>
+
+    <div class="main-container">
+        <div class="col-1">
+            <div style="font-weight: bold; color: var(--dim); margin-bottom:10px;">NET_TRAFFIC</div>
+            <div class="traffic-graph" id="trafficGraph"></div>
+        </div>
+
+        <div class="col-2">
+            <div class="map-header">
+                <span style="font-size: 1.2rem; font-weight: bold;">TARGET ZONE: AREA 4</span>
+                <span id="status" style="font-size: 1.2rem; font-weight: bold; color: var(--alcedo);">STATUS: CONTESTED</span>
+            </div>
+            <div class="grid-container" id="gridMap"></div>
+            <div id="percentage">18.2%</div>
+            <div style="text-align: center; color: var(--dim);">VILLAREAL SHARE</div>
+        </div>
+
+        <div class="col-3">
+            <div class="terminal" id="terminal">
+                <div>>_ SYSTEM_LOG</div>
+            </div>
+            <button id="actionBtn" onclick="startSequence()">INITIATE BATCH [ENTER]</button>
+        </div>
+    </div>
+
+    <div id="popup">
+        <div class="popup-title">TRANSACTION VERIFIED</div>
+        <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px;">RECIPIENT: Tina Mercado</div>
+        <div style="font-size: 1.5rem; color: var(--accent); margin-bottom: 10px;">AMOUNT: &nbsp; PHP 1,500.00</div>
+        <div style="color: var(--dim); margin-bottom: 30px;">TAG: &nbsp; &nbsp; &nbsp; MEDICAL AID / EDUCATIONAL</div>
+        <div style="color: #00ff00; font-weight: bold; font-size: 1.2rem; text-align: center;">STATUS: FUNDS RELEASED</div>
+    </div>
+
+    <script>
+        // CONFIG
+        const BLOCKS_COUNT = 140; // 10x14
+        const RECIPIENT = "Tina Mercado";
+        let isRunning = false;
+
+        // INITIALIZE
+        function init() {
+            // 1. Build Grid
+            const grid = document.getElementById('gridMap');
+            for(let i=0; i<BLOCKS_COUNT; i++) {
+                const div = document.createElement('div');
+                div.className = 'grid-block';
+                // Random friendly blocks initially
+                if(Math.random() < 0.18) div.classList.add('friendly');
+                grid.appendChild(div);
+            }
+
+            // 2. Build Traffic Graph
+            const graph = document.getElementById('trafficGraph');
+            for(let i=0; i<15; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = Math.random() * 100 + '%';
+                graph.appendChild(bar);
+            }
+
+            // 3. Start Clock & Animations
+            setInterval(updateClock, 1000);
+            setInterval(animateTraffic, 100);
+            bootSequence();
+        }
+
+        function log(text, isAlert = false) {
+            const term = document.getElementById('terminal');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            if(isAlert) entry.classList.add('alert');
+            entry.innerText = `> ${text}`;
+            term.appendChild(entry);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', {hour12: false});
+        }
+
+        function animateTraffic() {
+            const bars = document.querySelectorAll('.bar');
+            bars.forEach(bar => {
+                bar.style.height = Math.random() * 80 + '%';
+                bar.style.backgroundColor = Math.random() > 0.8 ? 'var(--villareal)' : 'var(--dim)';
+            });
+        }
+
+        function bootSequence() {
+            log("SYSTEM BOOT_SEQ_99...");
+            setTimeout(() => log("ENCRYPTING CONNECTION..."), 500);
+            setTimeout(() => log("LOADING GEOSPATIAL DATA [AREA 4]..."), 1000);
+            setTimeout(() => log("WARNING: ANOMALOUS VOTER PATTERNS.", true), 1500);
+        }
+
+        // --- MAIN ACTION ---
+        function startSequence() {
+            if(isRunning) return;
+            isRunning = true;
+            
+            const btn = document.getElementById('actionBtn');
+            btn.innerText = "PROCESSING...";
+            btn.style.backgroundColor = "#333";
+            btn.style.color = "white";
+
+            log("--- INITIATING PROTOCOL SOBRE ---");
+            
+            setTimeout(() => log("BYPASSING BANKING GATEWAYS..."), 1000);
+            setTimeout(() => log("INJECTING FUNDS (PHP 1,500/HEAD)..."), 1500);
+            setTimeout(() => {
+                log("SCANNING RECIPIENTS...");
+                startHackingEffect();
+            }, 2500);
+        }
+
+        function startHackingEffect() {
+            const blocks = Array.from(document.querySelectorAll('.grid-block'));
+            let converted = 0;
+            const total = blocks.length;
+
+            // Shuffle blocks for random flip effect
+            const shuffled = blocks.sort(() => 0.5 - Math.random());
+
+            shuffled.forEach((block, index) => {
+                setTimeout(() => {
+                    block.classList.add('friendly');
+                    converted++;
+                    
+                    // Update Percentage
+                    let percent = 18.2 + (converted / total * 81.8);
+                    if(percent > 100) percent = 100;
+                    
+                    const pLabel = document.getElementById('percentage');
+                    pLabel.innerText = percent.toFixed(1) + "%";
+                    pLabel.style.color = "var(--villareal)";
+
+                    if(percent > 60) {
+                        document.getElementById('status').innerText = "STATUS: SECURING...";
+                        document.getElementById('status').style.color = "var(--accent)";
+                    }
+                }, index * 20); // Speed of flip
+            });
+
+            // Finish
+            setTimeout(() => {
+                log("TRANSFER COMPLETE.");
+                log("AREA 4 SECURED.");
+                document.getElementById('status').innerText = "STATUS: VILLAREAL DOMINANT";
+                document.getElementById('status').style.color = "var(--villareal)";
+                
+                const btn = document.getElementById('actionBtn');
+                btn.className = "success";
+                btn.innerText = "OPERATION SUCCESS";
+
+                setTimeout(() => {
+                    document.getElementById('popup').style.display = "block";
+                }, 1000);
+
+            }, total * 20 + 500);
+        }
+
+        // Bind Enter Key
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter') startSequence();
+        });
+
+        // Run
+        init();
+    </script>
+</body>
+</html>
