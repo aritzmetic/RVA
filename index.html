@@ -75,7 +75,7 @@
             cursor: pointer;
             opacity: 0.6;
             transition: 0.3s;
-            display: none; /* Hidden until started */
+            display: none;
         }
         #exit-btn:hover { opacity: 1; background: #440000; }
 
@@ -213,7 +213,7 @@
             position: fixed;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 500px;
+            width: 550px;
             background: var(--panel);
             border: 4px solid var(--villareal);
             padding: 40px;
@@ -225,7 +225,24 @@
             font-size: 2.5rem;
             color: var(--villareal);
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+        }
+        .next-btn {
+            background: transparent;
+            border: 2px solid var(--villareal);
+            color: var(--villareal);
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Consolas', monospace;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .next-btn:hover {
+            background: var(--villareal);
+            color: black;
         }
     </style>
 </head>
@@ -251,7 +268,7 @@
 
         <div class="col-2">
             <div class="map-header">
-                <span style="font-size: 1.2rem; font-weight: bold;">TARGET ZONE: AREA 4</span>
+                <span id="zone-label" style="font-size: 1.2rem; font-weight: bold;">TARGET ZONE: AREA 4</span>
                 <span id="status" style="font-size: 1.2rem; font-weight: bold; color: var(--alcedo);">STATUS: CONTESTED</span>
             </div>
             <div class="grid-container" id="gridMap"></div>
@@ -269,30 +286,36 @@
 
     <div id="popup">
         <div class="popup-title">TRANSACTION VERIFIED</div>
+        
         <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px;">RECIPIENT: Tina Mercado</div>
         <div style="font-size: 1.5rem; color: var(--accent); margin-bottom: 10px;">AMOUNT: &nbsp; PHP 1,500.00</div>
-        <div style="color: var(--dim); margin-bottom: 30px;">TAG: &nbsp; &nbsp; &nbsp; MEDICAL AID / EDUCATIONAL</div>
-        <div style="color: #00ff00; font-weight: bold; font-size: 1.2rem; text-align: center;">STATUS: FUNDS RELEASED</div>
+        <div style="color: var(--dim); margin-bottom: 20px;">TAG: &nbsp; &nbsp; &nbsp; MEDICAL AID / EDUCATIONAL</div>
+        <div style="color: #00ff00; font-weight: bold; font-size: 1.2rem; text-align: center; margin-bottom: 10px;">STATUS: FUNDS RELEASED</div>
+        
+        <hr style="border-color: #333; margin: 20px 0;">
+        
+        <div style="text-align: center; color: white; font-family: Consolas;">UPLINK READY FOR NEXT SECTOR</div>
+        <button class="next-btn" onclick="nextTransaction()">PROCEED TO NEXT TARGET >></button>
     </div>
 
     <script>
         // CONFIG
         const BLOCKS_COUNT = 140; // 10x14
-        const RECIPIENT = "Tina Mercado";
+        const RECIPIENT = "Area Community Members";
+        
         let isRunning = false;
+        let currentArea = 4; // Start at Area 4
 
         // --- FULLSCREEN LOGIC ---
         function enterSystem() {
             const elem = document.documentElement;
             if (elem.requestFullscreen) {
                 elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) { /* Safari */
+            } else if (elem.webkitRequestFullscreen) {
                 elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) { /* IE11 */
+            } else if (elem.msRequestFullscreen) {
                 elem.msRequestFullscreen();
             }
-
-            // Hide overlay, show exit button, start app
             document.getElementById('start-overlay').style.display = 'none';
             document.getElementById('exit-btn').style.display = 'block';
             init();
@@ -301,24 +324,22 @@
         function exitSystem() {
             if (document.exitFullscreen) {
                 document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) { /* Safari */
+            } else if (document.webkitExitFullscreen) {
                 document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) { /* IE11 */
+            } else if (document.msExitFullscreen) {
                 document.msExitFullscreen();
             }
-            // Optional: Bring back start screen? 
-            // For now, let's just leave them on the page.
         }
 
         // INITIALIZE
         function init() {
             // 1. Build Grid
             const grid = document.getElementById('gridMap');
-            grid.innerHTML = ''; // Clear if re-run
+            grid.innerHTML = ''; 
             for(let i=0; i<BLOCKS_COUNT; i++) {
                 const div = document.createElement('div');
                 div.className = 'grid-block';
-                // Random friendly blocks initially
+                // Random friendly blocks initially (18%)
                 if(Math.random() < 0.18) div.classList.add('friendly');
                 grid.appendChild(div);
             }
@@ -333,10 +354,47 @@
                 graph.appendChild(bar);
             }
 
-            // 3. Start Clock & Animations
-            setInterval(updateClock, 1000);
-            setInterval(animateTraffic, 100);
-            bootSequence();
+            // 3. Start Animations (only once)
+            if(!window.animationStarted) {
+                setInterval(updateClock, 1000);
+                setInterval(animateTraffic, 100);
+                bootSequence();
+                window.animationStarted = true;
+            }
+        }
+
+        // --- NEW FUNCTION: LOOP TO NEXT AREA ---
+        function nextTransaction() {
+            // Hide Popup
+            document.getElementById('popup').style.display = 'none';
+            
+            // Increment Area
+            currentArea++;
+            document.getElementById('zone-label').innerText = `TARGET ZONE: AREA ${currentArea}`;
+            
+            // Reset State
+            isRunning = false;
+            
+            // Reset Button
+            const btn = document.getElementById('actionBtn');
+            btn.className = "action-btn";
+            btn.innerText = "INITIATE BATCH [ENTER]";
+            btn.style.backgroundColor = "var(--alcedo)";
+            btn.style.color = "black";
+            
+            // Reset Stats
+            document.getElementById('percentage').innerText = "18.2%";
+            document.getElementById('percentage').style.color = "var(--alcedo)";
+            document.getElementById('status').innerText = "STATUS: CONTESTED";
+            document.getElementById('status').style.color = "var(--alcedo)";
+
+            // Re-draw grid (Reset to hostile)
+            init(); 
+            
+            // Add logs
+            log("--------------------------------");
+            log(`ESTABLISHING LINK TO AREA ${currentArea}...`);
+            setTimeout(() => log("CONNECTION SECURE. READY."), 800);
         }
 
         function log(text, isAlert = false) {
@@ -365,7 +423,7 @@
         function bootSequence() {
             log("SYSTEM BOOT_SEQ_99...");
             setTimeout(() => log("ENCRYPTING CONNECTION..."), 500);
-            setTimeout(() => log("LOADING GEOSPATIAL DATA [AREA 4]..."), 1000);
+            setTimeout(() => log(`LOADING GEOSPATIAL DATA [AREA ${currentArea}]...`), 1000);
             setTimeout(() => log("WARNING: ANOMALOUS VOTER PATTERNS.", true), 1500);
         }
 
@@ -393,8 +451,6 @@
             const blocks = Array.from(document.querySelectorAll('.grid-block'));
             let converted = 0;
             const total = blocks.length;
-
-            // Shuffle blocks for random flip effect
             const shuffled = blocks.sort(() => 0.5 - Math.random());
 
             shuffled.forEach((block, index) => {
@@ -402,7 +458,6 @@
                     block.classList.add('friendly');
                     converted++;
                     
-                    // Update Percentage
                     let percent = 18.2 + (converted / total * 81.8);
                     if(percent > 100) percent = 100;
                     
@@ -414,18 +469,18 @@
                         document.getElementById('status').innerText = "STATUS: SECURING...";
                         document.getElementById('status').style.color = "var(--accent)";
                     }
-                }, index * 20); // Speed of flip
+                }, index * 20); // Speed
             });
 
             // Finish
             setTimeout(() => {
                 log("TRANSFER COMPLETE.");
-                log("AREA 4 SECURED.");
+                log(`AREA ${currentArea} SECURED.`);
                 document.getElementById('status').innerText = "STATUS: VILLAREAL DOMINANT";
                 document.getElementById('status').style.color = "var(--villareal)";
                 
                 const btn = document.getElementById('actionBtn');
-                btn.className = "action-btn success"; // Fixed class name
+                btn.className = "action-btn success";
                 btn.innerText = "OPERATION SUCCESS";
 
                 setTimeout(() => {
@@ -437,7 +492,14 @@
 
         // Bind Enter Key
         document.addEventListener('keydown', (e) => {
-            if(e.key === 'Enter') startSequence();
+            if(e.key === 'Enter') {
+                // If popup is open, Enter hits the "Next" button
+                if(document.getElementById('popup').style.display === 'block') {
+                    nextTransaction();
+                } else {
+                    startSequence();
+                }
+            }
         });
     </script>
 </body>
