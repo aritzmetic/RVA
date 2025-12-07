@@ -26,6 +26,59 @@
             overflow: hidden;
         }
 
+        /* --- START SCREEN (OVERLAY) --- */
+        #start-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: black;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .start-btn {
+            border: 2px solid var(--villareal);
+            background: transparent;
+            color: var(--villareal);
+            padding: 20px 50px;
+            font-size: 2rem;
+            font-family: Impact, sans-serif;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: pulse 1.5s infinite;
+        }
+        .start-sub {
+            color: var(--dim);
+            margin-top: 20px;
+            font-family: 'Consolas', monospace;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 10px var(--villareal); opacity: 1; }
+            50% { box-shadow: 0 0 30px var(--villareal); opacity: 0.7; }
+            100% { box-shadow: 0 0 10px var(--villareal); opacity: 1; }
+        }
+
+        /* --- EXIT BUTTON --- */
+        #exit-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 5000;
+            background: #220000;
+            color: var(--alcedo);
+            border: 1px solid var(--alcedo);
+            padding: 5px 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: 0.3s;
+            display: none; /* Hidden until started */
+        }
+        #exit-btn:hover { opacity: 1; background: #440000; }
+
         /* HEADER */
         header {
             display: flex;
@@ -136,7 +189,7 @@
         .log-entry { margin-bottom: 5px; }
         .alert { color: var(--alcedo); background: #220000; }
         
-        button {
+        button.action-btn {
             background: var(--alcedo);
             color: black;
             border: none;
@@ -147,7 +200,7 @@
             cursor: pointer;
             transition: 0.2s;
         }
-        button:hover { opacity: 0.8; }
+        button.action-btn:hover { opacity: 0.8; }
         button.success {
             background: var(--villareal);
             color: black;
@@ -178,6 +231,13 @@
 </head>
 <body>
 
+    <div id="start-overlay" onclick="enterSystem()">
+        <div class="start-btn">INITIALIZE SYSTEM</div>
+        <div class="start-sub">CLICK TO ESTABLISH SECURE CONNECTION</div>
+    </div>
+
+    <button id="exit-btn" onclick="exitSystem()">DISCONNECT [X]</button>
+
     <header>
         <h1>P R O J E C T &nbsp; S A P P H I R E</h1>
         <div id="clock">00:00:00</div>
@@ -203,7 +263,7 @@
             <div class="terminal" id="terminal">
                 <div>>_ SYSTEM_LOG</div>
             </div>
-            <button id="actionBtn" onclick="startSequence()">INITIATE BATCH [ENTER]</button>
+            <button id="actionBtn" class="action-btn" onclick="startSequence()">INITIATE BATCH [ENTER]</button>
         </div>
     </div>
 
@@ -221,10 +281,40 @@
         const RECIPIENT = "Tina Mercado";
         let isRunning = false;
 
+        // --- FULLSCREEN LOGIC ---
+        function enterSystem() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE11 */
+                elem.msRequestFullscreen();
+            }
+
+            // Hide overlay, show exit button, start app
+            document.getElementById('start-overlay').style.display = 'none';
+            document.getElementById('exit-btn').style.display = 'block';
+            init();
+        }
+
+        function exitSystem() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) { /* Safari */
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE11 */
+                document.msExitFullscreen();
+            }
+            // Optional: Bring back start screen? 
+            // For now, let's just leave them on the page.
+        }
+
         // INITIALIZE
         function init() {
             // 1. Build Grid
             const grid = document.getElementById('gridMap');
+            grid.innerHTML = ''; // Clear if re-run
             for(let i=0; i<BLOCKS_COUNT; i++) {
                 const div = document.createElement('div');
                 div.className = 'grid-block';
@@ -235,6 +325,7 @@
 
             // 2. Build Traffic Graph
             const graph = document.getElementById('trafficGraph');
+            graph.innerHTML = '';
             for(let i=0; i<15; i++) {
                 const bar = document.createElement('div');
                 bar.className = 'bar';
@@ -334,7 +425,7 @@
                 document.getElementById('status').style.color = "var(--villareal)";
                 
                 const btn = document.getElementById('actionBtn');
-                btn.className = "success";
+                btn.className = "action-btn success"; // Fixed class name
                 btn.innerText = "OPERATION SUCCESS";
 
                 setTimeout(() => {
@@ -348,9 +439,6 @@
         document.addEventListener('keydown', (e) => {
             if(e.key === 'Enter') startSequence();
         });
-
-        // Run
-        init();
     </script>
 </body>
 </html>
